@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 0 1,16 * *"
 
+# fork 仓库的 GITHUB_TOKEN 默认可能是只读，没有这行 gh release create 会 403
+permissions:
+  contents: write
+
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   REPO_URL: https://github.com/immortalwrt/immortalwrt
@@ -40,9 +44,8 @@ jobs:
         working-directory: ./openwrt
         run: |
           ./scripts/feeds update -a
-          bash $GITHUB_WORKSPACE/armsr/armv8/diy/diy.sh
-          ./scripts/feeds update -a
           ./scripts/feeds install -a
+          bash $GITHUB_WORKSPACE/armsr/armv8/diy/diy.sh
 
       - name: Load N1 custom config
         run: |
@@ -69,12 +72,12 @@ jobs:
           kernel_usage: flippy
           openwrt_kernel: 6.12.y
           openwrt_size: 256/1024
-          builder_name: nantayo
+          builder_name: cczhao12
 
       - name: Upload firmware to release
         run: |
           tag="OpenWrt_${{ env.FILE_DATE }}"
-          gh release create $tag --repo ${{ github.repository }} --title "$tag" --notes "$(printf '首次使用建议全新刷写\n* 基本信息\nIP: 192.168.2.2\n账户: root\n密码: password')" 2> /dev/null || true
+          gh release create $tag --repo ${{ github.repository }} --title "$tag" --notes "$(printf '首次使用建议全新刷写\n* 基本信息\nIP: 192.168.6.69\n网关: 192.168.6.1\n账户: root\n密码: password\n* 已预装 PassWall(全核心) 与网页终端(服务->TTYD)\n* LAN 口 DHCP 已关闭，避免与主路由冲突')" 2> /dev/null || true
           gh release upload $tag ${{ env.PACKAGED_OUTPUTPATH }}/*.img.gz --repo ${{ github.repository }} --clobber
 
       - name: Delete old releases

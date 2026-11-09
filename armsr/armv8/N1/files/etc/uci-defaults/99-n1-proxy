@@ -1,0 +1,22 @@
+#!/bin/sh
+# 首次启动执行一次，执行成功（exit 0）后由系统自动删除。
+# 用 uci-defaults 而不是直接覆盖 /etc/config/dhcp，避免丢掉 dnsmasq 的发行版默认值。
+
+# 单臂旁路由：主路由 192.168.6.1 已经在发 DHCP，本机必须关掉，
+# 否则局域网内两台 DHCP 服务器会互相抢答。
+# 若改为由本机发 DHCP，把下面 ignore 改成 '0' 并关掉主路由的 DHCP。
+uci -q batch <<-EOF
+	set dhcp.lan.ignore='1'
+	set dhcp.wan.ignore='1'
+	commit dhcp
+EOF
+
+# 发行版默认时区是 UTC，会让日志和 04:00 的 fstrim 计划任务都偏 8 小时
+uci -q batch <<-EOF
+	set system.@system[0].hostname='N1-Proxy'
+	set system.@system[0].timezone='CST-8'
+	set system.@system[0].zonename='Asia/Shanghai'
+	commit system
+EOF
+
+exit 0
