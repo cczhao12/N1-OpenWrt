@@ -122,7 +122,7 @@ precheck_config() {
   tr -d '\r' < .config > "$cur"
 
   local n=0 miss=0 yreq=0 ylost=0 line sym want have short
-  while IFS= read -r line; do
+  while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
       CONFIG_*=y) sym=${line%=*}; want=y ;;
       CONFIG_*=m) sym=${line%=*}; want=m ;;
