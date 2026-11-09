@@ -46,10 +46,12 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           bash $GITHUB_WORKSPACE/armsr/armv8/diy/diy.sh
+          bash $GITHUB_WORKSPACE/armsr/armv8/diy/precheck.sh feeds
 
       - name: Load N1 custom config
         run: |
           rm -rf openwrt/files openwrt/.config
+          cp armsr/armv8/N1/.config /tmp/n1-requested.config
           mv armsr/armv8/N1/files armsr/armv8/N1/.config openwrt/
           chmod -R 755 openwrt
 
@@ -57,6 +59,7 @@ jobs:
         working-directory: ./openwrt
         run: |
           make defconfig
+          bash $GITHUB_WORKSPACE/armsr/armv8/diy/precheck.sh config
           make download -j$(( $(nproc) * 2 ))
 
       - name: Compile N1 firmware

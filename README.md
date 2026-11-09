@@ -53,6 +53,7 @@ GitHub Actions 手动触发（Actions → Build ImmortalWrt-25.12 for armsr_armv
 - 源码：ImmortalWrt `openwrt-25.12`，target `armsr/armv8`
 - 打包：`ophub/amlogic-s9xxx-openwrt@main`，`s905d`，flippy 内核 `6.12.y`（来自 `ophub/kernel`）
 - 产物：`openwrt_amlogic_s905d_k6.12.x_日期.img.gz`，发布到本仓库 Releases，保留最近 2 个
+- 预检：`diy/precheck.sh` 在 download 之前分两步拦错——`feeds`（各 Go 核心的 `go.mod` 要求 vs feed 里的工具链版本）和 `config`（`make defconfig` 之后回读 `.config`，看我们写下的开关有没有被强制改写）。大约第 10 分钟就能报出问题，不用等编译两小时。它只查静态可验证的错，包内源码编译失败仍然要到 compile 阶段才知道。
 
 > **fork 后必须先去 Actions 页手动启用 workflows**，否则 Run workflow 按钮不出现。
 >
