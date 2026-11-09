@@ -114,7 +114,14 @@ precheck_config() {
     f {f=0}
   ' include/target.mk)
 
-  local n=0 line sym want have short
+  # 先把 .config 去 CR 落成临时文件，再用文件名去 grep。
+  # 不能写 tr ... < .config | grep -q：grep -q 一命中就退，tr 被 SIGPIPE 打死，
+  # 而本脚本开了 pipefail，管道整体返回 141，判定会全部落到「=n」——假 FAIL 满天飞。
+  local cur
+  cur=$(mktemp) || { bad "mktemp 失败"; return; }
+  tr -d '\r' < .config > "$cur"
+
+  local n=0 miss=0 yreq=0 ylost=0 line sym want have short
   while IFS= read -r line; do
     case "$line" in
       CONFIG_*=y) sym=${line%=*}; want=y ;;
@@ -124,19 +131,30 @@ precheck_config() {
       *) continue ;;
     esac
     n=$((n + 1))
-    if   tr -d '\r' < .config | grep -q "^${sym}=y$"; then have=y
-    elif tr -d '\r' < .config | grep -q "^${sym}=m$"; then have=m
+    if   grep -q "^${sym}=y$" "$cur"; then have=y
+    elif grep -q "^${sym}=m$" "$cur"; then have=m
     else have=n
     fi
+    if [ "$want" = y ]; then
+      yreq=$((yreq + 1))
+      [ "$have" = y ] || ylost=$((ylost + 1))
+    fi
     [ "$want" = "$have" ] && continue
+    miss=$((miss + 1))
     short=${sym#CONFIG_PACKAGE_}
-    if [ "$want" = n ] && [ -n "$dflt" ] && printf '%s\n' "$dflt" | grep -qx -- "$short"; then
+    if [ "$want" = n ] && [ -n "$dflt" ] && grep -qx -- "$short" <<<"$dflt"; then
       warn "$sym：请求 n，defconfig 之后是 $have —— 它在 include/target.mk 的 DEFAULT_PACKAGES 里，要靠 .config 关不掉，只能改那份列表"
     else
       bad "$sym：请求 $want，defconfig 之后是 $have（多半是被某条 select 强制改写了）"
     fi
   done < <(tr -d '\r' < "$req")
-  echo "  共比对 $n 项（DEFAULT_PACKAGES 命中 $(printf '%s\n' "$dflt" | grep -c .) 项在册）"
+  rm -f "$cur"
+  # 自己也得有点自知之明：要求 =y 的项全都不见了，不可能是配置真被改写，
+  # 而是本脚本读 .config 的手法坏了（这一版就栽过 pipefail + grep -q 的 SIGPIPE）。
+  if [ "$yreq" -gt 5 ] && [ "$ylost" = "$yreq" ]; then
+    bad "$yreq 项要求 =y 的配置一项都没在 .config 里找到 —— 别照着上面这些行改固件，是预检自己读错了"
+  fi
+  echo "  共比对 $n 项，$miss 项不符（要求 =y 共 $yreq 项，丢了 $ylost 项；DEFAULT_PACKAGES 在册 $(grep -c . <<<"$dflt") 项）"
   [ "$FAIL" = 0 ] && ok "没有需要拦下的配置偏移"
 }
 
