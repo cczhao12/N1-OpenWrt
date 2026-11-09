@@ -55,6 +55,8 @@ GitHub Actions 手动触发（Actions → Build ImmortalWrt-25.12 for armsr_armv
 - 产物：`openwrt_amlogic_s905d_k6.12.x_日期.img.gz`，发布到本仓库 Releases，保留最近 2 个
 
 > **fork 后必须先去 Actions 页手动启用 workflows**，否则 Run workflow 按钮不出现。
+>
+> `diy.sh` 里有一处 xray-core 的 Go 版本补丁：Xray-core 26.11.9 起 `go.mod` 要求 go ≥ 1.27，而 feed 的 `GO_DEFAULT_VERSION` 写死 1.26。若日后 feed 默认版本追到 1.27 以上，那段可整块删除。
 
 ## 刷机
 

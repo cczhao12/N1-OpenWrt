@@ -12,6 +12,23 @@ for p in $CORE_PKGS; do
 done
 git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git package/passwall-packages
 
+# Xray-core 26.11.9 的 go.mod 要求 go>=1.27，而 feed 的 GO_DEFAULT_VERSION 写死 1.26，
+# 且 GOTOOLCHAIN=local 禁止 Go 自行下载工具链，compile 阶段秒退：
+#   go: ../../go.mod requires go >= 1.27 (running go 1.26.10; GOTOOLCHAIN=local)
+# 用 feed 自带的按包指定机制只把 xray-core 指向 golang1.27；sing-box、hysteria、
+# shadow-tls、geoview、v2ray-plugin、xray-plugin 已确认在 1.26 下编译通过，不动。
+# 这里宁可当场退出：一次完整构建要跑近 3 小时，不值得把错误留到最后。
+if [ -d feeds/packages/lang/golang/golang1.27 ]; then
+  sed -i 's|^PKG_BUILD_DEPENDS:=golang/host$|PKG_BUILD_DEPENDS:=golang1.27/host|' package/passwall-packages/xray-core/Makefile
+  grep -q 'PKG_BUILD_DEPENDS:=golang1.27/host' package/passwall-packages/xray-core/Makefile || {
+    echo "ERROR: xray-core 的 golang1.27 补丁未生效，上游 Makefile 写法可能已变"
+    exit 1
+  }
+else
+  echo "ERROR: feed 中没有 golang1.27，xray-core 会因 go.mod 要求 go>=1.27 而失败"
+  exit 1
+fi
+
 # 移除过时的 LuCI 版本，换成最新 PassWall
 rm -rf feeds/luci/applications/luci-app-passwall package/feeds/luci/luci-app-passwall
 git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall.git package/passwall-luci
