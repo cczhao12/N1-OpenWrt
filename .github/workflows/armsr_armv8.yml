@@ -80,7 +80,7 @@ jobs:
       - name: Upload firmware to release
         run: |
           tag="OpenWrt_${{ env.FILE_DATE }}"
-          gh release create $tag --repo ${{ github.repository }} --title "$tag" --notes "$(printf '首次使用建议全新刷写\n* 基本信息\nIP: 192.168.6.69\n网关: 192.168.6.1\n账户: root\n密码: password\n* 已预装 PassWall(全核心) 与网页终端(服务->TTYD)\n* LAN 口 DHCP 已关闭，避免与主路由冲突')" 2> /dev/null || true
+          gh release create $tag --repo ${{ github.repository }} --title "$tag" --notes "$(printf '首次使用建议全新刷写\n* 基本信息\nIP: 192.168.6.69\n网关: 192.168.6.1\n账户: root\n密码: password\n* 已预装 PassWall2(全核心) 与网页终端(服务->TTYD)\n* LAN 口 DHCP 已关闭，避免与主路由冲突')" 2> /dev/null || true
           gh release upload $tag ${{ env.PACKAGED_OUTPUTPATH }}/*.img.gz --repo ${{ github.repository }} --clobber
 
       - name: Delete old releases

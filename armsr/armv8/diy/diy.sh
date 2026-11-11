@@ -1,7 +1,7 @@
 #!/bin/bash
 # 在 feeds update / install 全部完成之后运行，工作目录为 openwrt 源码根目录。
-# PassWall 集成采用官方 README「方法2」：把包放进 package/ 而不是 feeds/，
-# 这样不会被后续 feeds 操作覆盖，且版本始终跟随 PassWall 上游。
+# PassWall2 集成沿用原来的做法：把包放进 package/ 而不是 feeds/，
+# 这样不会被后续 feeds 操作覆盖，且版本始终跟随 PassWall2 上游。
 set -e
 
 CORE_PKGS="xray-core v2ray-geodata sing-box chinadns-ng dns2socks hysteria ipt2socks microsocks naiveproxy shadowsocks-rust shadowsocksr-libev simple-obfs tcping v2ray-plugin xray-plugin geoview shadow-tls smartdns"
@@ -29,9 +29,9 @@ else
   exit 1
 fi
 
-# 移除过时的 LuCI 版本，换成最新 PassWall
-rm -rf feeds/luci/applications/luci-app-passwall package/feeds/luci/luci-app-passwall
-git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall.git package/passwall-luci
+# 移除过时的 LuCI 版本，换成最新 PassWall2
+rm -rf feeds/luci/applications/luci-app-passwall2 package/feeds/luci/luci-app-passwall2
+git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall2.git package/passwall2-luci
 
 # luci-app-amlogic：eMMC 写入 / 在线升级 / CPU 调频
 rm -rf package/feeds/packages/luci-app-amlogic package/feeds/luci/luci-app-amlogic

@@ -1,4 +1,4 @@
-# N1-OpenWrt（PassWall 单臂旁路由专用）
+# N1-OpenWrt（PassWall2 单臂旁路由专用）
 
 Fork 自 [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt)，按"纯代理网关"用途裁剪。
 
@@ -19,7 +19,7 @@ Fork 自 [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt)，按"纯�
 
 ## 预装软件
 
-- **luci-app-passwall** —— 核心全开：Xray、sing-box、Hysteria2、NaiveProxy、Shadow-TLS、Shadowsocks-Rust、ShadowsocksR-libev、Simple-Obfs、v2ray-plugin、xray-plugin、v2ray-geodata、Geoview、SmartDNS、Haproxy。核心包取自 [Openwrt-Passwall/openwrt-passwall-packages](https://github.com/Openwrt-Passwall/openwrt-passwall-packages) 上游，不依赖 ImmortalWrt feed 里的滞后版本。
+- **luci-app-passwall2** —— 核心全开：Xray、sing-box、Hysteria2、NaiveProxy、Shadow-TLS、Shadowsocks-Rust、ShadowsocksR-libev、Simple-Obfs、v2ray-plugin、xray-plugin、v2ray-geodata、Geoview、SmartDNS、Haproxy。核心包取自 [Openwrt-Passwall/openwrt-passwall-packages](https://github.com/Openwrt-Passwall/openwrt-passwall-packages) 上游，不依赖 ImmortalWrt feed 里的滞后版本。PassWall2 的 Makefile 少了几个 `INCLUDE_` 开关，这几个核心改在 `.config` 里直接选包，固件内容与之前一致。
 - **luci-app-ttyd** —— 网页终端，LuCI 菜单：服务 → TTYD
 - **luci-app-amlogic** —— 晶晨宝盒：写入 eMMC、在线升级、CPU 调频
 
@@ -27,7 +27,7 @@ Fork 自 [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt)，按"纯�
 
 ## IPv6 与 CPU
 
-**IPv6 关闭方式**：`network.lan.ipv6='0'` 让 netifd 往 `/proc/sys/net/ipv6/conf/eth0/disable_ipv6` 写 `1`，eth0 连 `fe80::` 链路本地地址都不会有；同时不装 DHCPv6 客户端/服务端，LuCI 里也不再出现 6in4/6to4/DHCPv6 这些协议选项。PassWall 自身的 `ipv6_tproxy` 默认就是 `0`、`filter_proxy_ipv6` 默认 `1`，无需另改。
+**IPv6 关闭方式**：`network.lan.ipv6='0'` 让 netifd 往 `/proc/sys/net/ipv6/conf/eth0/disable_ipv6` 写 `1`，eth0 连 `fe80::` 链路本地地址都不会有；同时不装 DHCPv6 客户端/服务端，LuCI 里也不再出现 6in4/6to4/DHCPv6 这些协议选项。PassWall2 自身的 `ipv6_tproxy` 默认就是 `0`（已无 `filter_proxy_ipv6` 开关），无需另改。
 
 > 内核里的 IPv6 协议栈关不掉——OpenWrt 的 `CONFIG_IPV6` 在 `config/Config-build.in` 里是 `def_bool y`，写 `=n` 会被 `make defconfig` 改回来。上面这套是运行时禁用，效果等价：本机没有任何可用的 IPv6 地址与路由。
 >
@@ -37,9 +37,9 @@ Fork 自 [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt)，按"纯�
 
 ## 多端口分别走不同节点
 
-PassWall 原生支持，无需手写配置文件：
+PassWall2 原生支持，无需手写配置文件：
 
-**服务 → PassWall → 主要 → 打开 Socks 总开关 → Socks Config 表格**
+**服务 → PassWall 2 → 主要 → 打开 Socks 总开关 → Socks Config 表格**
 
 每行独立设置：`节点`（下拉选，即该端口的固定出口）、`端口`（SOCKS）、`HTTP 端口`（0 = 关闭）。加几行就有几个独立入口，各自起独立进程与配置文件。
 
@@ -82,4 +82,4 @@ GitHub Actions 手动触发（Actions → Build ImmortalWrt-25.12 for armsr_armv
 - [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt) —— 原始精简结构
 - [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) —— 源码
 - [ophub](https://github.com/ophub/amlogic-s9xxx-openwrt) —— 打包脚本与[内核](https://github.com/ophub/kernel/releases/tag/kernel_flippy)
-- [Openwrt-Passwall](https://github.com/Openwrt-Passwall/openwrt-passwall) —— PassWall
+- [Openwrt-Passwall2](https://github.com/Openwrt-Passwall/openwrt-passwall2) —— PassWall2
