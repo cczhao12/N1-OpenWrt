@@ -1,0 +1,14 @@
+#!/bin/sh
+# 换场地时的备用管理地址：把常见家用网段的 X.69 一起挂到网口上。
+# 盒子搬到 192.168.1.x / 31.x / 50.x 这类环境时，即使还没改网关，也能直接
+# 用 http://192.168.X.69 进 LuCI 把网关改过来，不用担心改错地址失联。
+# 只是管理别名，主地址和默认路由仍由 /etc/config/network 决定。
+
+[ "$ACTION" = "ifup" ] || exit 0
+[ "$INTERFACE" = "lan" ] || exit 0
+
+for n in 0 1 2 3 4 5 6 7 8 10 31 50 68 88 100 123 199; do
+	ip addr replace 192.168.$n.69/24 dev eth0
+done
+
+exit 0
