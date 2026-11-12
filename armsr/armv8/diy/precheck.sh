@@ -121,6 +121,17 @@ precheck_config() {
   cur=$(mktemp) || { bad "mktemp 失败"; return; }
   tr -d '\r' < .config > "$cur"
 
+  echo "== Rust 工具链"
+  # shadow-tls / shadowsocks-rust 的 Makefile 都写着 PKG_BUILD_DEPENDS:=rust/host，
+  # 而 ImmortalWrt 的 rust 固定 --set=llvm.download-ci-llvm=true，要从
+  # ci-artifacts.rust-lang.org 取预编译 LLVM；该地址现在对所有版本（1.88–1.96）都 404，
+  # 所以 rust 一旦被选中就一定在 compile 阶段断掉（2026-11-12 那次就栽在这，白跑 1.5 小时）。
+  if grep -qE '^(CONFIG_PACKAGE_(rust|shadow-tls|shadowsocks-rust[^=]*|librespeed-cli-rust|rust-bindgen)|CONFIG_PACKAGE_luci-app-passwall2_INCLUDE_Shadowsocks_Rust_Client)=y' "$cur"; then
+    bad "选中了需要 rust/host 的核心（shadow-tls / shadowsocks-rust）：rust 现在拿不到预编译 LLVM，必然失败"
+  else
+    ok "没有选中需要 rust 工具链的核心"
+  fi
+
   local n=0 miss=0 yreq=0 ylost=0 line sym want have short
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in

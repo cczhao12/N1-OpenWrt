@@ -37,11 +37,13 @@ OpenWrt 官方镜像的 root 密码是空的，LuCI 和 dropbear 都会直接拒
 
 ## 预装软件
 
-- **luci-app-passwall2** —— 核心全开：Xray、sing-box、Hysteria2、NaiveProxy、Shadow-TLS、Shadowsocks-Rust、ShadowsocksR-libev、Simple-Obfs、v2ray-plugin、xray-plugin、v2ray-geodata、Geoview、SmartDNS、Haproxy。核心包取自 [Openwrt-Passwall/openwrt-passwall-packages](https://github.com/Openwrt-Passwall/openwrt-passwall-packages) 上游，不依赖 ImmortalWrt feed 里的滞后版本。PassWall2 的 Makefile 少了几个 `INCLUDE_` 开关，这几个核心改在 `.config` 里直接选包，固件内容与之前一致。
+- **luci-app-passwall2** —— 核心：Xray、sing-box、Hysteria2、NaiveProxy、ShadowsocksR-libev、Simple-Obfs、v2ray-plugin、xray-plugin、v2ray-geodata、Geoview、SmartDNS、Haproxy。核心包取自 [Openwrt-Passwall/openwrt-passwall-packages](https://github.com/Openwrt-Passwall/openwrt-passwall-packages) 上游，不依赖 ImmortalWrt feed 里的滞后版本。PassWall2 的 Makefile 少了几个 `INCLUDE_` 开关，这几个核心改在 `.config` 里直接选包，固件内容与之前一致。
 - **luci-app-ttyd** —— 网页终端，LuCI 菜单：服务 → TTYD
 - **luci-app-amlogic** —— 晶晨宝盒：写入 eMMC、在线升级、CPU 调频
 
 已移除上游的 `luci-app-dae`（含 eBPF/BTF 内核调试信息）、`luci-app-podman`、`luci-app-samba4`，以及 `odhcp6c`、`odhcpd-ipv6only`、`luci-proto-ipv6`。
+
+**Shadow-TLS 与 Shadowsocks-Rust 暂不编入**：这两个包的 Makefile 要求宿主 rust（`PKG_BUILD_DEPENDS:=rust/host`），而 ImmortalWrt 的 rust 固定从 `ci-artifacts.rust-lang.org` 下载预编译 LLVM——该地址自 2026-11-12 起对所有版本（1.88–1.96）都返回 404，rust 一定构建失败。Shadowsocks 节点改用 Xray / sing-box 核心即可，功能不缺；预检里已加了硬拦截，这两个开关再被打开会当场报错。上游修好后把 `.config` 里这两个开关改回 `=y` 即可。
 
 ## IPv6 与 CPU
 
