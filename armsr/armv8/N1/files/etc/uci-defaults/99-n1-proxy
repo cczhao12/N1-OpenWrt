@@ -19,4 +19,30 @@ uci -q batch <<-EOF
 	commit system
 EOF
 
+# root 密码：发行版默认是空密码，dropbear 和 LuCI 都拒绝空密码登录，
+# 所以镜像刷完只能看到登录框却永远进不去（这正是上一版「没有 LuCI」的真相）。
+# 不用 chpasswd：busybox 的 CHPASSWD 选项是关的，镜像里没有这个 applet，只有 passwd。
+# 这里直接把 sha512-crypt 哈希落进 /etc/shadow，密码 password。
+ROOT_HASH='$6$n1proxy$2tHIYDM5Ii0LdAG1LTBTkgtvGgUPvrWEk5jtkSiPJG02dfWT3SivmEUGQobt9cHVZS44Lxv0sO4h3mFdbDzpm/'
+if [ -f /etc/shadow ]; then
+  if grep -q '^root:' /etc/shadow; then
+    awk -v h="$ROOT_HASH" 'BEGIN{FS=OFS=":"} $1=="root"{$2=h} {print}' /etc/shadow > /etc/shadow.new &&
+      mv /etc/shadow.new /etc/shadow
+  else
+    printf 'root:%s:0:0:99999:7:::\n' "$ROOT_HASH" >> /etc/shadow
+  fi
+  chmod 600 /etc/shadow
+fi
+
+# 显式打开密码认证并确保 ssh / web 随开机启动，
+# 不依赖 defconfig 的默认值是否被别的包改写。
+uci -q batch <<-EOF
+	set dropbear.@dropbear[0].PasswordAuth='on'
+	set dropbear.@dropbear[0].RootPasswordAuth='on'
+	set dropbear.@dropbear[0].RootLogin='1'
+	commit dropbear
+EOF
+/etc/init.d/dropbear enable 2>/dev/null
+/etc/init.d/uhttpd enable 2>/dev/null
+
 exit 0
