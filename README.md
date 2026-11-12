@@ -8,14 +8,32 @@ Fork 自 [nantayo/N1-OpenWrt](https://github.com/nantayo/N1-OpenWrt)，按"纯�
 |---|---|
 | 设备 | 斐讯 N1（Amlogic S905D） |
 | 模式 | 单臂旁路由，有线，无 WiFi / PPPoE |
-| IP | `192.168.6.69/24` |
+| IP | `192.168.6.69/24`（固件默认，换场地在 LuCI 里改） |
 | 网关 | `192.168.6.1` |
 | 上游 DNS | `223.5.5.5` / `119.29.29.29` |
-| 账户 | `root` / `password` |
+| 账户 | `root` / `password`（首次开机自动设置，见下） |
 | LAN DHCP | **已关闭**（主路由负责分配地址） |
 | IPv6 | **已关闭**（见下） |
 | CPU 调频 | `schedutil`，500 MHz – 1512 MHz 按需升降 |
 | 时区 | Asia/Shanghai (CST-8) |
+
+## 首次启动与登录
+
+OpenWrt 官方镜像的 root 密码是空的，LuCI 和 dropbear 都会直接拒绝登录——"刷完进不去 LuCI" 就是这个原因。本固件在 `/etc/uci-defaults/99-n1-proxy` 里首次开机做了三件事：把 root 密码设成 `password`、打开 dropbear 的密码登录、关掉 LAN/WAN 的 DHCP。`uci-defaults` 只跑一次，之后改密码不会被覆盖。
+
+改自己的密码：LuCI → 系统 → 管理权 → 路由器密码，或 SSH 进去执行 `passwd`。
+
+## 备用管理地址
+
+盒子搬到别的网段、网关又填错的话就再也进不去了。所以固件里有个 hotplug 脚本 `/etc/hotplug.d/iface/99-mgmt-alias`，每次 lan 口 up 时给 eth0 额外挂上这些地址：
+
+`192.168.{0,1,2,3,4,5,6,7,8,10,31,50,68,88,100,123,199}.69/24`
+
+只是管理别名，主地址和默认路由仍由 `/etc/config/network` 决定。换场地时：
+
+1. 插上网线，浏览器依次试 `http://192.168.1.69`、`http://192.168.31.69`、`http://192.168.50.69`……总有一个能进
+2. LuCI → 网络 → 接口 → LAN，只改 **IPv4 地址** 和 **IPv4 网关**，保存并应用
+3. 之后主地址就是新的，备用别名一直还在
 
 ## 预装软件
 
@@ -46,6 +64,8 @@ PassWall2 原生支持，无需手写配置文件：
 > HTTP 端口只有 **sing-box 或 Xray** 核心支持，本固件两者都已编入。
 > `bind_local` 保持关闭才会绑 `0.0.0.0`，局域网其他设备才能连进来。
 
+节点可以从 LuCI 手动填，也可以走订阅（节点 → 订阅，或在 SSH/ttyd 里执行 `lua /usr/share/passwall2/subscribe.lua start all manual`，节点有变化会自动重启 PassWall2）。
+
 ## 编译
 
 GitHub Actions 手动触发（Actions → Build ImmortalWrt-25.12 for armsr_armv8 → Run workflow），或每月 1 日、16 日北京时间 08:00 自动跑。
@@ -67,6 +87,12 @@ GitHub Actions 手动触发（Actions → Build ImmortalWrt-25.12 for armsr_armv
 
 > 写 eMMC 前请先备份原厂安卓。救砖需要 Amlogic USB Burning Tool + USB 双公头线 + 短接。
 > 在线升级已指向本仓库，后缀 `.img.gz`；**不要改动挂载点**，否则无法启动。
+
+**命令行等价写法**：`/usr/sbin/openwrt-install-amlogic yes 101 auto ext4`（依次是 写不写 uboot、机型 ID、dtb、共享分区格式），ttyd 里直接跑也行；四个参数给全就不再交互提问。`101` 是 `/etc/model_database.txt` 里的 Phicomm-N1。
+
+> 晶晨宝盒页面上的 **"自动写入 bootloader" 必须保持开启**（配置项 `amlogic_write_bootloader` 不能是 `0`），关掉就只写根分区，盒子无法自行启动。
+>
+> eMMC 安装是把 `/etc`、`/usr`、`/www` 等整体复制过去，所以密码、LAN 配置、PassWall2 节点都会保留，不用重配。
 
 ## 主路由侧还需设置
 
