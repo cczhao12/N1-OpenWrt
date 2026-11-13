@@ -1,9 +1,9 @@
 name: Build ImmortalWrt-25.12 for armsr_armv8
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 0 1,16 * *"
+#on:
+#  workflow_dispatch:
+#  schedule:
+#    - cron: "0 0 1,16 * *"
 
 # fork 仓库的 GITHUB_TOKEN 默认可能是只读，没有这行 gh release create 会 403
 permissions:
