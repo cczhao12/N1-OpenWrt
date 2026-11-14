@@ -1,7 +1,8 @@
 name: Build ImmortalWrt-25.12 for armsr_armv8
 
-#on:
-#  workflow_dispatch:
+on:
+  workflow_dispatch:
+# 每月 1 日 / 16 日 08:00 的定时构建已停用，只留手动触发：
 #  schedule:
 #    - cron: "0 0 1,16 * *"
 
